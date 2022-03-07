@@ -1,0 +1,223 @@
+---
+title: "scotpolls"
+author: "Thalie Emond"
+date: "03/03/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(HH)
+library(gridExtra)
+
+ID_blackasian <- read_csv("ID_blackasian.csv", 
+    col_types = cols(Year = col_number()))
+ID_moreno <- read_csv("ID_moreno.csv", 
+    col_types = cols(Year = col_number()))
+indep_econ <- read_csv("indep_econ.csv", 
+    col_types = cols(Year = col_number()))
+indep_EUmember <- read_csv("indep_EUmember.csv", 
+    col_types = cols(Year = col_number()))
+NatCen_intlvoice <- read_csv("NatCen_intlvoice.csv")
+indep_pride <- read_csv("indep_pride.csv", 
+    col_types = cols(Year = col_number()))
+NatCen_law <- read_csv("NatCen_law.csv")
+
+```
+
+```{r}
+
+# Do you agree or disagree that Scotland would begin to lose its \nidentity if more black and Asian people came to live in Scotland?
+
+likert(Year~., ID_blackasian, ReferenceZero = 3, 
+       ylab = "Year", 
+       as.percent = T,
+       xlimEqualLeftRight = T,
+       main = list("Do you agree or disagree that Scotland would begin to lose its \nidentity if more black and Asian people came to live in Scotland?"), 
+       sub = list("Answers"), 
+       xlim = c(-70, 70),
+       strip = F)
+
+# National identity that best describes the way respondent thinks of themselves?
+
+ScotBlue <- likertColor(nc=7, ReferenceZero=7,
+                            colorFunction="diverge_hcl",
+                            colorFunctionArgs=
+                              list(h=c(40, 246), c=82, l=c(55,82), power=2))
+
+likert(Year~., ID_moreno, 
+       ReferenceZero = 8,
+       xlimEqualLeftRight = F,
+       as.percent = T,
+       # Labels
+       ylab = "Percentage",
+       rightAxis = F,
+       xlab = "Year",
+       main = list("National identity that best describes \nthe way respondent thinks of themselves?"),
+       # Colors
+       reference.line.col="gray65",
+       col = ScotBlue,
+       horizontal = F)
+
+
+### OR
+
+lapply(ID_moreno[,2:8], FUN = as.numeric)
+
+
+ID_moreno2 <- pivot_longer(ID_moreno, 
+                                cols = 2:8, 
+                                names_to = "Answer")
+
+ID_moreno2 <- ID_moreno2 %>%
+  mutate(Percent = value*100)
+
+ID_moreno_graph <- ggplot() + 
+  geom_bar(
+    aes(x = Year, fill = Answer,y = Percent),
+    data = ID_moreno2,
+    stat="identity", position="dodge") + 
+  coord_flip() +
+  ggtitle("National identity that best describes \nthe way respondent thinks of themselves?") +
+  theme(panel.background = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line = element_line(color = "black", linetype = "solid"),
+        legend.position = "bottom",
+        axis.title.x = element_blank()) +
+  guides(fill=guide_legend(title=NULL,ncol=1))
+
+```
+
+```{r referendums}
+
+referendum2014 <- data.frame(
+  Answer = 1:100
+)
+referendum2014[,1] <- rep(c(0,1), c(55,45))
+
+refresults2014 <- referendum2014 %>%
+  ggplot() + 
+  geom_bar(aes(Answer, fill = factor(Answer)), show.legend = T) +
+  ylim(0,100) +
+  # Labels
+  labs(title = "Results of the 2014 Referendum", y = "", x = "") +
+  # Theme
+  scale_fill_manual(values = c("#CF081F", "#0065BF")) +
+  theme(panel.background = element_blank(),
+        axis.text.x = element_blank(),
+        axis.line = element_line(color = "black", 
+                                 linetype = "solid"),
+        legend.position = "none")
+#png("refresults2014.png")
+#print(refresults2014)
+#dev.off()
+
+```
+
+```{r poll q's on independence}
+
+
+ScotGreen <- likertColor(nc=5, ReferenceZero=3,
+                            colorFunction="diverge_hcl",
+                            colorFunctionArgs=
+                              list(h=c(15, 130), c=72, l=c(70,90), power=1.5))
+likert(Year~., indep_econ, 
+       ReferenceZero = 3,
+       xlimEqualLeftRight = F,
+       as.percent = T,
+       # Labels
+       ylab = "Percentage",
+       rightAxis = F,
+       xlab = "Year",
+       horizontal = F,
+       main = list("If Scotland were to become independent, \nwould Scotland’s economy be better or worse?"),
+       # Colors
+       reference.line.col="gray65",
+       col = ScotGreen)
+
+likert(Year~., indep_pride, 
+       ReferenceZero = 3,
+       xlimEqualLeftRight = T,
+       as.percent = T,
+       # Labels
+       ylab = "Percentage",
+       rightAxis = F,
+       xlab = "Year",
+       horizontal = F,
+       main = list("If Scotland were to become independent, \nwould people have more or less pride in their country?"),
+       # Colors
+       reference.line.col="gray65",
+       col = ScotGreen)
+
+ScotGreen2 <- likertColor(nc=4, ReferenceZero=NULL,
+                            colorFunction="diverge_hcl",
+                            colorFunctionArgs=
+                              list(h=c(15, 130), c=72, l=c(70,90), power=1.5))
+likert(Year~., indep_EUmember, 
+       ReferenceZero = 2,
+       xlimEqualLeftRight = T,
+       as.percent = T,
+       # Labels
+       ylab = "Percentage",
+       rightAxis = F,
+       xlab = "Year",
+       horizontal = F,
+       main = list("If Scotland became independent \nshould it be a member of the European Union?"),
+       # Colors
+       reference.line.col="gray65",
+       col = ScotGreen2)
+
+ScotRed <- likertColor(nc=3, ReferenceZero=2,
+                            colorFunction="diverge_hcl",
+                            colorFunctionArgs=
+                              list(h=c(15, 130), c=72, l=c(70,90), power=1.5))
+
+# there is one law for the rich and the poor 
+likert(ID~., NatCen_law, 
+       ReferenceZero = 2,
+       xlimEqualLeftRight = T,
+       as.percent = T,
+       # Labels
+       ylab = "Percentage",
+       rightAxis = F,
+       xlab = "",
+       horizontal = F,
+       main = list("Question: Do you agree or disagree that \nthere is one law for the rich and the poor?"),
+       sub = list("NatCen Social Research, 2018"),
+       # Colors
+       reference.line.col="gray65",
+       col = ScotRed)
+
+NatCen_law2 <- pivot_longer(NatCen_law, 
+                                cols = 2:4, 
+                                names_to = "Answer")
+
+NatCen_law2$Answer <- factor(NatCen_law2$Answer, levels = c("Agree", "Neither", "Disagree"))
+
+NatCen_law_hist <- ggplot() + 
+  geom_bar(
+    aes(x = ID, fill = Answer, y = value),
+    data = NatCen_law2,
+    stat="identity", position="dodge") +
+  ylab("Percent") +
+  #xlim(0,100) + 
+  coord_flip() +
+  ggtitle("Question: Do you agree or disagree that \nthere is one law for the rich and the poor?") +
+  theme(panel.background = element_blank(),
+        panel.grid.major.x = element_line(color = "black"),
+        axis.line = element_line(color = "black", linetype = "solid"),
+        legend.position = "right",
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(size = 15)) +
+  guides(fill=guide_legend(title=NULL,ncol=1, reverse = T)) +
+  scale_fill_manual(values = c("#5BC065", "#CBDCCC", "#F3908A"))
+
+
+NatCen_law_hist
+
+```
